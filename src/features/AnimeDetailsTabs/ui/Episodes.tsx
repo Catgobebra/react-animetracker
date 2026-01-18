@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   Text,
   Card,
@@ -7,32 +9,51 @@ import {
   BackgroundImage,
   Badge,
   Flex,
+  Center,
+  Pagination
   /* Overlay */
 } from "@mantine/core";
 
 import { animeApi } from '@/entities/anime';
 
+import Loading from "./Loading";
+import Error from "./Error";
+
+import { ITEMS_EP_PAGE } from "../constants/constants";
+
 import {formatDateUS} from '@/shared/lib/datetime'
 
-export function Episodes() {
-  const {data: animeResponse, /* error, */ isLoading : isLoadingAnime } = animeApi.useGetAnimeByIdQuery(30831)
-  const {data: episodesResponse, isLoading : isLoadingEpisodes } = animeApi.useGetAnimeEpisodesQuery(30831)
+interface EpisodesProps {
+    animeId : number
+}
+
+export function Episodes({animeId} : EpisodesProps) {
+  const [activePage, setPage] = useState(1);
+
+  const {data: animeResponse, isLoading : isLoadingAnime,
+     isError : animeError} = animeApi.useGetAnimeByIdQuery(animeId)
+  const {data: episodesResponse,
+     isLoading : isLoadingEpisodes,
+    isError : EpisodesError } = animeApi.useGetAnimeEpisodesQuery(animeId)
   
   const anime = animeResponse?.data;
   const episodes = episodesResponse?.data ?? [];
 
   const isLoading = isLoadingAnime || isLoadingEpisodes
 
-  if (isLoading) return <p>gay...</p>
+  if (isLoading) return <Loading height={400} />
+  if (animeError || !animeResponse?.data) return <Error height={400} />
+  if (EpisodesError || !episodesResponse?.data) return <Error height={400} />
 
-    
-  console.log(console.log(episodes))
+  const pages = Math.ceil(episodes.length/ITEMS_EP_PAGE)
+  const currentPageEpisodes = episodes.slice(ITEMS_EP_PAGE*(activePage-1),activePage*ITEMS_EP_PAGE)
+
   return (
       <Container>
       <Text size="lg" mt="md">Episodes ({episodes.length})</Text>
-      <Stack w="100%">
-        {episodes.map((episode, index) => {
-          return (<Card w="100%" key={index}>
+      <Stack w="100%" h={290}>
+        {currentPageEpisodes.map((episode) => {
+          return (<Card w="100%" key={episode.mal_id}>
           <Flex justify="space-between" align="flex-start">
             <Flex gap={15} align="flex-start">
               <BackgroundImage
@@ -76,6 +97,7 @@ export function Episodes() {
         </Card>)
         })}
       </Stack>
+      {pages > 1 && <Center><Pagination total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
     </Container>
   )
 }

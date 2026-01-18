@@ -1,0 +1,1 @@
+export { AnimeAdditionalInfo } from './ui/AnimeAdditionalInfo';
