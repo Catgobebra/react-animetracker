@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import {
   Text,
   Card,
@@ -23,13 +21,13 @@ import { ITEMS_EP_PAGE } from "../constants/constants";
 
 import {formatDateUS} from '@/shared/lib/datetime'
 
+import usePagination from "./usePagination";
+
 interface EpisodesProps {
     animeId : number
 }
 
 export function Episodes({animeId} : EpisodesProps) {
-  const [activePage, setPage] = useState(1);
-
   const {data: animeResponse, isLoading : isLoadingAnime,
      isError : animeError} = animeApi.useGetAnimeByIdQuery(animeId)
   const {data: episodesResponse,
@@ -41,18 +39,21 @@ export function Episodes({animeId} : EpisodesProps) {
 
   const isLoading = isLoadingAnime || isLoadingEpisodes
 
+  const {pages,
+        currentPage,
+        activePage,
+        setPage,
+        hasNext} = usePagination(episodes,ITEMS_EP_PAGE)
+
   if (isLoading) return <Loading height={400} />
   if (animeError || !animeResponse?.data) return <Error height={400} />
   if (EpisodesError || !episodesResponse?.data) return <Error height={400} />
-
-  const pages = Math.ceil(episodes.length/ITEMS_EP_PAGE)
-  const currentPageEpisodes = episodes.slice(ITEMS_EP_PAGE*(activePage-1),activePage*ITEMS_EP_PAGE)
 
   return (
       <Container>
       <Text size="lg" mt="md">Episodes ({episodes.length})</Text>
       <Stack w="100%" h={290}>
-        {currentPageEpisodes.map((episode) => {
+        {currentPage.map((episode) => {
           return (<Card w="100%" key={episode.mal_id}>
           <Flex justify="space-between" align="flex-start">
             <Flex gap={15} align="flex-start">
@@ -97,7 +98,7 @@ export function Episodes({animeId} : EpisodesProps) {
         </Card>)
         })}
       </Stack>
-      {pages > 1 && <Center><Pagination total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
+      {hasNext && <Center><Pagination total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
     </Container>
   )
 }

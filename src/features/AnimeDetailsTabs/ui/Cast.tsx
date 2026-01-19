@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import {
   Text,
   Container,
@@ -12,7 +10,7 @@ import {
 import Loading from "./Loading";
 import Error from "./Error";
 import { animeApi } from "@/entities/anime";
-
+import usePagination from "./usePagination";
 import { ITEMS_PER_PAGE } from "../constants/constants";
 
 interface CastProps {
@@ -20,15 +18,17 @@ interface CastProps {
 }
 
 export function Cast({animeId} : CastProps) {
-    const [activePage, setPage] = useState(1);
-
     const {data: staffResponse, isLoading : isLoadingStaff, isError } = animeApi.useGetAnimeStaffQuery(animeId)
     const staff = staffResponse?.data || []
+
+    const {pages,
+    currentPage,
+    activePage,
+    setPage,
+    hasNext} = usePagination(staff,ITEMS_PER_PAGE)
+
     if (isLoadingStaff) return <Loading height={400} />
     if (isError || !staffResponse?.data) return <Error height={400} />
-
-    const pages = Math.ceil(staff.length/ITEMS_PER_PAGE)
-    const currentPageStaff = staff.slice(ITEMS_PER_PAGE*(activePage-1),activePage*ITEMS_PER_PAGE)
 
     return(
         <Container>
@@ -36,7 +36,7 @@ export function Cast({animeId} : CastProps) {
             Crew
           </Text>
           <Stack h={260}>
-            {currentPageStaff.map(person => (
+            {currentPage.map(person => (
               <Group justify="space-between" key={person.person.mal_id}>
                 <Text c="dimmed" size="lg">
                   {person.positions?.join(", ") || "—"}
@@ -45,7 +45,7 @@ export function Cast({animeId} : CastProps) {
             </Group>
             ))}
           </Stack>
-          {pages > 1 && <Center><Pagination total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
+          {hasNext && <Center><Pagination total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
         </Container>
     )
 }

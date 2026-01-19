@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Title,
   Text,
@@ -20,22 +19,26 @@ import Loading from "./Loading";
 
 import { ITEMS_PRODUC_PAGE } from "../constants/constants";
 
+import usePagination from "./usePagination";
+
 interface OverviewProps {
   animeId : number
 }
 
 export function Overview({animeId} : OverviewProps) {
-  const [activePage, setPage] = useState(1);
 
   const {data, isLoading, isError } = animeApi.useGetAnimeByIdQuery(animeId)
   const anime = data?.data as Anime;
+
+  const {pages,
+  currentPage,
+  activePage,
+  setPage,
+  hasNext} = usePagination(anime.producers,ITEMS_PRODUC_PAGE)
+
   if (isLoading) return <Loading height={400}/>
   if (isError || !data?.data) return <Error height={400}/>
 
-  const pages = Math.ceil(anime.producers.length/ITEMS_PRODUC_PAGE)
-  const currentPageProducer = anime.producers.slice(
-    ITEMS_PRODUC_PAGE*(activePage-1),activePage*ITEMS_PRODUC_PAGE)
-  
   return (
     <Container>
       <Title order={3} mt="md">
@@ -54,7 +57,7 @@ export function Overview({animeId} : OverviewProps) {
         Producers
       </Text>
       <Group>
-      {currentPageProducer.map((producer) => (<Card
+      {currentPage.map((producer) => (<Card
         shadow="sm"
         padding="sm"
         component="a"
@@ -78,7 +81,7 @@ export function Overview({animeId} : OverviewProps) {
         </Stack>
       </Card>))}
       </Group>
-      {pages > 1 && <Center><Pagination mt={10} total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
+      {hasNext && <Center><Pagination mt={10} total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
     </Container>
   );
 }

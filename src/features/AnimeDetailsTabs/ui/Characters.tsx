@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Text,
   Avatar,
@@ -20,27 +19,30 @@ import { animeApi } from "@/entities/anime";
 
 import { ITEMS_CHAR_PAGE } from "../constants/constants";
 
+import usePagination from "./usePagination";
+
 interface CharactersProps {
   animeId : number
 }
 
 export function Characters({animeId} : CharactersProps) {
-  const [activePage, setPage] = useState(1);
-
   const {data: characterResponse, isLoading : isLoadingCharacters, isError } = animeApi.useGetAnimeCharactersQuery(animeId)
   const characters = characterResponse?.data || []
+
+  const {pages,
+      currentPage,
+      activePage,
+      setPage,
+      hasNext} = usePagination(characters,ITEMS_CHAR_PAGE)
+
   if (isLoadingCharacters) return <Loading height={400} />
   if (isError || !characterResponse?.data) return <Error height={400} />
-
-  const pages = Math.ceil(characters.length/ITEMS_CHAR_PAGE)
-  const currentPageCharacters = characters
-  .slice(ITEMS_CHAR_PAGE*(activePage-1),activePage*ITEMS_CHAR_PAGE)
 
     return (
         <Container>
                 <Text size="lg" mt="md">Characters & Seiyuu</Text>
                 <Stack h={380}>
-                  {currentPageCharacters.map(creature => (
+                  {currentPage.map(creature => (
                     <Card
                      key={creature.character.mal_id}
                      component="a"
@@ -72,7 +74,7 @@ export function Characters({animeId} : CharactersProps) {
                   </Card>
                   ))}
                 </Stack>
-                {pages > 1 && <Center><Pagination total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
+                {hasNext && <Center><Pagination total={pages} value={activePage} onChange={setPage} withEdges /></Center>}
               </Container>
     )
 }
