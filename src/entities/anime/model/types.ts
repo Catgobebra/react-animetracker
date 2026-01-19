@@ -159,6 +159,7 @@ export interface VoiceActor {
 }
 
 export interface AnimeCharacter {
+  favorites: number
   character: Character
   role: string
   voice_actors: VoiceActor[]

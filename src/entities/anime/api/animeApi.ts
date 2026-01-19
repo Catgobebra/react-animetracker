@@ -13,8 +13,20 @@ export const animeApi = createApi({
   baseQuery: fetchBaseQuery({baseUrl: 'https://api.jikan.moe/v4/'}),
   keepUnusedDataFor: 30,
   endpoints: (builder) => ({
-    getTopAnime: builder.query<JikanResponseList,void>({
-      query: () => `/top/anime`}),
+    getTopAnime: builder.infiniteQuery<JikanResponseList, void, number>({
+      infiniteQueryOptions: {
+        initialPageParam: 1 as const,
+        getNextPageParam: (lastPage, allPages, lastPageParam) => {
+          if (lastPage.pagination.has_next_page) {
+            return lastPageParam + 1;
+          }
+          return undefined;
+        },
+      },
+      query({ pageParam }) {
+        return `/top/anime?page=${pageParam}`
+      },
+    }),
     getAnimeById: builder.query<JikanResponseSingle,number>({
       query: (id) => `/anime/${id}/full`}),
     getAnimeCharacters: builder.query<JikanResponseCharacters,number>({
@@ -25,13 +37,16 @@ export const animeApi = createApi({
       query: (id) => `/anime/${id}/episodes`}),
     getAnimeVideos: builder.query<JikanResponseVideos,number>({
       query: (id) => `/anime/${id}/videos`}),
-    getAnimeReviews: builder.query<JikanResponseReviews,number>({
-      query: (id) => `/anime/${id}/reviews`}), 
+    getAnimeReviews: builder.query<JikanResponseReviews,{animeId: number; page: number}>({
+      query: ({ animeId, page }) => ({
+        url: `anime/${animeId}/reviews`,
+        params: { page },
+      })}), 
   }),
 });
 
 export const {
-  useGetTopAnimeQuery,
+  useGetTopAnimeInfiniteQuery,
   useGetAnimeByIdQuery,
   useGetAnimeCharactersQuery,
   useGetAnimeStaffQuery,

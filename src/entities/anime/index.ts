@@ -1,7 +1,7 @@
 export { AnimeHeader } from './ui/AnimeHeader';
 
-export type {Anime} from "./model/types"
+export type {Anime, AnimeEpisode } from "./model/types"
 
 export {
-  animeApi
+  animeApi,
 } from './api/animeApi';
